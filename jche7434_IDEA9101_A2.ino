@@ -61,6 +61,11 @@ void setup() {
 
 void loop() {
   displayTime();
+
+  if(digitalRead(buttonG) == HIGH){
+    Serial.println("Game Started!");
+    thePitcher();
+  }
 }
 
 //Return a string of current time for displaying on the screen
@@ -118,6 +123,24 @@ void displayTime(){
   //convert the time string to a char array for display on the screen
   timeString.toCharArray(timeChar, 10);
 
-  tft.drawString(0, 200, timeChar);
+  tft.drawString(100, 0, timeChar);
+  
+}
+
+
+long thePitcher(){
+  
+  long score = 0;
+  int startM = minute();
+  int startS = second();
+
+  while((minute()-startM)*60+second()-startS < 10){
+    if(analogRead(vibration) != 0){
+      score ++;
+    }
+  };
+  Serial.print("Score: ");
+  Serial.println(score);
+  return score;
   
 }
