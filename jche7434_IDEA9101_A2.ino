@@ -90,7 +90,7 @@ void loop() {
 
     tft.clearScreen();
     tft.drawString(80, 80, "Total");
-    tft.drawString(80, 80, totalChar);
+    tft.drawString(80, 100, totalChar);
     delay(2000);
     tft.clearScreen();
     
@@ -162,16 +162,23 @@ long thePitcher(){
   long score = 0;
 
   char scoreChar[16];
+
+  int timeRm = 60;
+  char timeChar[2];
   
   int startM = minute();
   int startS = second();
 
   tft.clearScreen();
+  tft.drawString(80, 50, "Time left: ");
   tft.drawString(80, 80, "Score: ");
   tft.drawString(80, 100, "0");
   
-  while((minute()-startM)*60+second()-startS < 60){
+  while(timeRm > 0){
     Serial.println(analogRead(vibration));
+    timeRm = 60 - ((minute()-startM)*60+second()-startS);
+    String(timeRm).toCharArray(timeChar, 3);
+    tft.drawString(80, 60, timeChar);
     if(analogRead(vibration) > 80){
       score ++;
       String(score).toCharArray(scoreChar, 17);
