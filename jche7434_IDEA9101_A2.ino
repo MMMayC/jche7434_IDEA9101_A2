@@ -19,22 +19,26 @@ DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
 
 //Ultrasonic Sensor
-#define TRIGGER_PIN  14
-#define ECHO_PIN  15
+#define TRIGGER_PIN  15
+#define ECHO_PIN  16
 #define MAX_DISTANCE 500
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); 
 //long rangeInCentimeters;
 
-const int vibration = A0;
+const int vibration = A15;
 
-const int buttonG = A7;
-const int buttonY = A6;
-const int buttonR = A5;
+const int photoresistor = A8;
 
-const int joyStickX = A15;
-const int joyStickY = A13;
-const int joyStickZ = 45;
+//const int buttonG = A7;
+//const int buttonY = A6;
+//const int buttonR = A5;
+//
+//const int joyStickX = A15;
+//const int joyStickY = A13;
+//const int joyStickZ = 45;
 
+long total;
+char totalChar[16];
 
 
 void setup() {
@@ -45,12 +49,7 @@ void setup() {
   setTime(7, 29, 50, 6, 4, 2017);
 
   pinMode(vibration, INPUT);
-  pinMode(buttonG, INPUT);
-  pinMode(buttonY, INPUT);
-  pinMode(buttonR, INPUT);
-  pinMode(joyStickX, INPUT);
-  pinMode(joyStickY, INPUT);
-  pinMode(joyStickZ, INPUT);
+  pinMode(photoresistor, INPUT);
 
   //Screen Initialization
   tft.init();
@@ -72,12 +71,29 @@ void setup() {
 
 void loop() {
   displayTime();
-
-  Serial.println(digitalRead(buttonG));
-
-  if(digitalRead(buttonG) == HIGH){
+//  Serial.println(analogRead(photoresistor));
+  tft.drawString(0, 100, "Take the ball to start a game");
+  if(analogRead(photoresistor) > 80){
     Serial.println("Game Started!");
-    thePitcher();
+    tft.clearScreen();
+    tft.drawString(80, 100, "3");
+    delay(1000);
+    tft.drawString(80, 100, "2");
+    delay(1000);
+    tft.drawString(80, 100, "1");
+    delay(1000);
+    tft.drawString(80, 100, "Start!");
+    delay(1000);
+
+    total = thePitcher();
+    String(total).toCharArray(totalChar, 17);
+
+    tft.clearScreen();
+    tft.drawString(80, 80, "Total");
+    tft.drawString(80, 80, totalChar);
+    delay(2000);
+    tft.clearScreen();
+    
   }
 }
 
@@ -144,12 +160,22 @@ void displayTime(){
 long thePitcher(){
   
   long score = 0;
+
+  char scoreChar[16];
+  
   int startM = minute();
   int startS = second();
 
+  tft.clearScreen();
+  tft.drawString(80, 80, "Score: ");
+  tft.drawString(80, 100, "0");
+  
   while((minute()-startM)*60+second()-startS < 60){
-    if(analogRead(vibration) != 0){
+    Serial.println(analogRead(vibration));
+    if(analogRead(vibration) > 80){
       score ++;
+      String(score).toCharArray(scoreChar, 17);
+      tft.drawString(80, 100, scoreChar);
     }
   };
   Serial.print("Score: ");
@@ -165,5 +191,10 @@ int getDistance(){
 
   return rangeInCentimeters;
 }
+
+
+
+
+
 
 
