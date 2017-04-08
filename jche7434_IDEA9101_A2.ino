@@ -2,6 +2,8 @@
 #include <TimeLib.h>
 #include <Wire.h>
 #include <DS1307RTC.h>
+#include <NewPing.h>
+
 
 // TFT Screen
 #include <SPI.h>
@@ -16,15 +18,24 @@ SoftwareSerial mySoftwareSerial(A11, A10); // RX, TX
 DFRobotDFPlayerMini myDFPlayer;
 void printDetail(uint8_t type, int value);
 
+//Ultrasonic Sensor
+#define TRIGGER_PIN  14
+#define ECHO_PIN  15
+#define MAX_DISTANCE 500
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); 
+//long rangeInCentimeters;
+
 const int vibration = A0;
 
-const int buttonG = 42;
-const int buttonY = 40;
-const int buttonR = 38;
+const int buttonG = A7;
+const int buttonY = A6;
+const int buttonR = A5;
 
 const int joyStickX = A15;
 const int joyStickY = A13;
 const int joyStickZ = 45;
+
+
 
 void setup() {
   
@@ -61,6 +72,8 @@ void setup() {
 
 void loop() {
   displayTime();
+
+  Serial.println(digitalRead(buttonG));
 
   if(digitalRead(buttonG) == HIGH){
     Serial.println("Game Started!");
@@ -134,7 +147,7 @@ long thePitcher(){
   int startM = minute();
   int startS = second();
 
-  while((minute()-startM)*60+second()-startS < 10){
+  while((minute()-startM)*60+second()-startS < 60){
     if(analogRead(vibration) != 0){
       score ++;
     }
@@ -144,3 +157,13 @@ long thePitcher(){
   return score;
   
 }
+
+
+int getDistance(){
+  unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds.
+  int rangeInCentimeters = (uS / US_ROUNDTRIP_CM);
+
+  return rangeInCentimeters;
+}
+
+
