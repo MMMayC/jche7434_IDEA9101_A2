@@ -23,7 +23,7 @@ void printDetail(uint8_t type, int value);
 #define ECHO_PIN  16
 #define MAX_DISTANCE 500
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); 
-//long rangeInCentimeters;
+long rangeInCentimeters;
 
 const int vibration = A15;
 
@@ -39,6 +39,283 @@ const int photoresistor = A8;
 
 long total;
 char totalChar[16];
+
+
+class Pitcher
+{
+ private:
+  long score;
+
+  long total;
+
+  char scoreChar[16];
+
+  int startM;
+  int startS;
+  int timeRm;
+  
+  String timeString;
+  char timeChar[2];
+
+ public:
+  Pitcher(){
+    score = 0;
+    timeRm = 60;
+  }
+
+  void pitcherListener(){
+    
+    tft.drawString(0, 150, "Take the ball to start a game");
+    if(analogRead(photoresistor) > 80){
+      Serial.println("Game Started!");
+      tft.clearScreen();
+      tft.drawString(80, 150, "3");
+      delay(1000);
+      tft.drawString(80, 150, "2");
+      delay(1000);
+      tft.drawString(80, 150, "1");
+      delay(1000);
+      tft.drawString(80, 150, "Start!");
+      delay(1000);
+      pitcherStarted();
+    }
+  }
+
+  void pitcherStarted(){
+    
+    startM = minute();
+    startS = second();
+    
+    tft.clearScreen();
+    
+    tft.drawString(80, 80, "Time: ");
+    tft.drawString(80, 150, "Score: ");
+    tft.drawString(80, 170, "0");
+    while(timeRm > 0){
+      //Serial.println(analogRead(vibration));
+      timeRm = 60 - ((minute()-startM)*60+second()-startS);
+      if(timeRm < 10) {
+        timeString = '0';
+        timeString += String(timeRm);
+      }else{
+        timeString = String(timeRm);
+      }
+      timeString.toCharArray(timeChar, 3);
+      tft.drawString(80, 100, timeChar);
+      if(analogRead(vibration) > 80){
+        score ++;
+        String(score).toCharArray(scoreChar, 17);
+        tft.drawString(80, 170, scoreChar);
+      }
+    }
+    
+    pitcherCompleted();
+  }
+
+  void pitcherCompleted(){
+    String(score).toCharArray(totalChar, 17);
+
+    tft.clearScreen();
+    tft.drawString(80, 80, "Total");
+    tft.drawString(80, 100, totalChar);
+    delay(2000);
+    tft.clearScreen();
+    tft.drawString(80, 150, "Put the ball back, please.");
+    while(analogRead(photoresistor) > 80){}
+    tft.clearScreen();
+  }
+};
+
+
+
+class Pomodoro
+{
+ private:
+  int distance;
+  int countPomo;
+//  int pomoStartM;
+//  int pomoStartS;
+  int pomoTime = 15;
+  int shortBreak = 5;
+  int longBreak = 15;
+  int deskDistance = 50;
+  //String 
+
+ public:
+ 
+  Pomodoro(){
+    countPomo = 0;
+  }
+  
+  void pomoListener(){
+    myDFPlayer.pause();
+    Serial.println("pomoListener");
+    int distance = getDistance();
+    //Serial.println(getDistance());
+    tft.clearScreen();
+    tft.drawString(0, 100, "Come sit down and start a pomodoro!");
+    delay(1000);
+    tft.clearScreen();
+    while(distance > -1){
+      Serial.println(distance);
+      distance = getDistance();
+      if(distance > deskDistance){
+        Serial.println("distance > deskDistance");
+        tft.drawString(0, 100, "Come sit down and start a pomodoro!");
+      }else{
+        
+        tft.drawString(20, 100, "POMODORO Started.");
+        delay(1000);
+        tft.clearScreen();
+        pomoStarted();
+      }
+    }
+  }
+  void pomoStarted(){
+    
+    Serial.println("pomoStarted");
+    int pomoStartM = minute();
+    int pomoStartS = second();
+    int timeR = pomoTime;
+
+    
+
+    while(timeR > 0){
+    //  Serial.println("timeR > 0");
+      timeR = timeRemaining(pomoStartM, pomoStartS, pomoTime);
+
+      displayTimer("Pomodoro: ", timeR);
+      
+      if(getDistance() > deskDistance){
+        pomoFailed();
+      }
+    }
+
+    pomoCompleted();
+    
+  }
+
+  void pomoFailed(){
+    Serial.println("pomoFailed");
+    tft.clearScreen();
+    tft.drawString(20, 150, "Pomodoro Failed");
+    delay(1000);
+    pomoListener();
+  }
+
+  void pomoCompleted(){
+    Serial.println("pomoCompleted");
+    tft.clearScreen();
+    tft.drawString(20, 150, "Pomodoro Completed");
+    countPomo ++;
+    pomoBreak();
+  }
+
+  int getDistance(){
+   // Serial.println("getDistance");
+   delay(100);
+  unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds.
+  int rangeInCentimeters = (uS / US_ROUNDTRIP_CM);
+  Serial.println(rangeInCentimeters);
+  return rangeInCentimeters;
+}
+
+  int timePassed(int startM, int startS){
+  //  Serial.println("timePassed");
+    return (minute() - startM) * 60 + second() - startS;
+  }
+
+  int timeRemaining(int startM, int startS, int duration){
+  //  Serial.println("timeRemaining");
+    return (duration - ((minute() - startM) * 60 + second() - startS));
+  }
+
+  
+
+  char timeToChar(int m, int s){
+  //  Serial.println("timeToChar");
+    String timeString;
+    char timeChar[5];
+    if(m < 10){
+      timeString = "0";
+      timeString += String(m);
+    }else{
+      timeString = String(m);
+    }
+    timeString += ":";
+    if(s < 10){
+      timeString += "0";
+      timeString += String(s);
+    }else{
+      timeString += String(s);
+    }
+    timeString.toCharArray(timeChar, 6);
+    //Serial.println(timeChar);
+    return timeChar;
+  }
+
+  
+  void displayTimer(char titleD[], int timeR){
+   // Serial.println("displayTimer");
+   String timeString;
+    char timeChar[5];
+    if(timeR/60 < 10){
+      timeString = "0";
+      timeString += String(timeR/60);
+    }else{
+      timeString = String(timeR/60);
+    }
+    timeString += ":";
+    if(timeR%60 < 10){
+      timeString += "0";
+      timeString += String(timeR%60);
+    }else{
+      timeString += String(timeR%60);
+    }
+    timeString.toCharArray(timeChar, 6);
+    
+    tft.drawString(80, 80, titleD);
+    tft.drawString(80, 100, timeChar);
+  }
+  
+  void pomoBreak(){
+
+    myDFPlayer.start();
+    Serial.println("pomoBreak");
+
+    int breakStartM = minute();
+    int breakStartS = second();
+
+    int timeR;
+
+    int breakTime;
+    
+    if(countPomo % 4 == 0){
+      breakTime = longBreak;
+      timeR = breakTime;
+    }else{
+      breakTime = shortBreak;
+      timeR = breakTime;
+    }
+
+    while(timeR > 0){
+      timeR = timeRemaining(breakStartM, breakStartS, breakTime);
+      displayTimer("Break: ", timeR);
+
+      if(getDistance() <= 80){
+        tft.drawString(0, 120, "Come on, you need a break!");
+      }
+
+      Pitcher pitcher;
+
+      pitcher.pitcherListener();
+      
+    }
+    pomoListener();
+  }
+
+};
+
 
 
 void setup() {
@@ -65,39 +342,17 @@ void setup() {
   Serial.println(F("DFPlayer Mini online."));
   
   myDFPlayer.volume(5);  //Set volume value. From 0 to 30
+  myDFPlayer.play(3);
+  myDFPlayer.pause();
 
-  
+  Pomodoro pomodoro;
+  pomodoro.pomoListener();
 }
 
 void loop() {
-  displayTime();
+  //displayTime();
 
-//  if()
-
-  
-  tft.drawString(0, 100, "Take the ball to start a game");
-  if(analogRead(photoresistor) > 80){
-    Serial.println("Game Started!");
-    tft.clearScreen();
-    tft.drawString(80, 100, "3");
-    delay(1000);
-    tft.drawString(80, 100, "2");
-    delay(1000);
-    tft.drawString(80, 100, "1");
-    delay(1000);
-    tft.drawString(80, 100, "Start!");
-    delay(1000);
-
-    total = thePitcher();
-    String(total).toCharArray(totalChar, 17);
-
-    tft.clearScreen();
-    tft.drawString(80, 80, "Total");
-    tft.drawString(80, 100, totalChar);
-    delay(2000);
-    tft.clearScreen();
-    
-  }
+  //pomodoro.pomoListener();
 }
 
 //Return a string of current time for displaying on the screen
@@ -159,55 +414,6 @@ void displayTime(){
   
 }
 
-
-long thePitcher(){
-  
-  long score = 0;
-
-  char scoreChar[16];
-
-  int timeRm = 60;
-  String timeString;
-  char timeChar[2];
-  
-  int startM = minute();
-  int startS = second();
-
-  tft.clearScreen();
-  tft.drawString(80, 50, "Time left: ");
-  tft.drawString(80, 80, "Score: ");
-  tft.drawString(80, 100, "0");
-  
-  while(timeRm > 0){
-    //Serial.println(analogRead(vibration));
-    timeRm = 60 - ((minute()-startM)*60+second()-startS);
-    if(timeRm < 10) {
-      timeString = '0';
-      timeString += String(timeRm);
-    }else{
-      timeString = String(timeRm);
-    }
-    timeString.toCharArray(timeChar, 3);
-    tft.drawString(80, 60, timeChar);
-    if(analogRead(vibration) > 80){
-      score ++;
-      String(score).toCharArray(scoreChar, 17);
-      tft.drawString(80, 100, scoreChar);
-    }
-  };
-  Serial.print("Score: ");
-  Serial.println(score);
-  return score;
-  
-}
-
-
-int getDistance(){
-  unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds.
-  int rangeInCentimeters = (uS / US_ROUNDTRIP_CM);
-
-  return rangeInCentimeters;
-}
 
 
 
