@@ -71,7 +71,10 @@ void setup() {
 
 void loop() {
   displayTime();
-//  Serial.println(analogRead(photoresistor));
+
+//  if()
+
+  
   tft.drawString(0, 100, "Take the ball to start a game");
   if(analogRead(photoresistor) > 80){
     Serial.println("Game Started!");
@@ -164,6 +167,7 @@ long thePitcher(){
   char scoreChar[16];
 
   int timeRm = 60;
+  String timeString;
   char timeChar[2];
   
   int startM = minute();
@@ -175,9 +179,15 @@ long thePitcher(){
   tft.drawString(80, 100, "0");
   
   while(timeRm > 0){
-    Serial.println(analogRead(vibration));
+    //Serial.println(analogRead(vibration));
     timeRm = 60 - ((minute()-startM)*60+second()-startS);
-    String(timeRm).toCharArray(timeChar, 3);
+    if(timeRm < 10) {
+      timeString = '0';
+      timeString += String(timeRm);
+    }else{
+      timeString = String(timeRm);
+    }
+    timeString.toCharArray(timeChar, 3);
     tft.drawString(80, 60, timeChar);
     if(analogRead(vibration) > 80){
       score ++;
