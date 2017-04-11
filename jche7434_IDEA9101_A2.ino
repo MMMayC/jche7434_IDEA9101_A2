@@ -134,7 +134,7 @@ class Pomodoro
   int pomoTime = 15;
   int shortBreak = 5;
   int longBreak = 15;
-  int deskDistance = 50;
+  int deskDistance = 80;
   int commH = 7;
 //  int commInterval = 24;
   boolean isSent = false;
@@ -144,7 +144,7 @@ class Pomodoro
  public:
  
   Pomodoro(){
-    countPomo = 0;
+    countPomo = 10;
   }
   
   void pomoListener(){
@@ -163,7 +163,7 @@ class Pomodoro
     while(distance > -1){
       //Serial.print(hour());
       //Serial.println(minute());
-      if(hour() == commH && minute() > 31 && isSent == false){
+      if(hour() == commH && minute() > 30 && isSent == false){
         //Serial.println("Date: " + day() + " " + month() + " " + year());
         Serial.print("Day: ");
         Serial.println(day());
@@ -371,7 +371,7 @@ void setup() {
   }
   Serial.println(F("DFPlayer Mini online."));
   
-  myDFPlayer.volume(5);  //Set volume value. From 0 to 30
+  myDFPlayer.volume(20);  //Set volume value. From 0 to 30
   myDFPlayer.play(3);
   myDFPlayer.pause();
 
