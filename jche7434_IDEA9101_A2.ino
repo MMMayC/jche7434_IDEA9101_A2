@@ -4,7 +4,6 @@
 #include <DS1307RTC.h>
 #include <NewPing.h>
 
-
 // TFT Screen
 #include <SPI.h>
 #include <DmTftIli9341.h>
@@ -29,26 +28,17 @@ const int vibration = A15;
 
 const int photoresistor = A8;
 
-//const int buttonG = A7;
-//const int buttonY = A6;
-//const int buttonR = A5;
-//
-//const int joyStickX = A15;
-//const int joyStickY = A13;
-//const int joyStickZ = 45;
-
-long total;
-char totalChar[16];
 
 
 class Pitcher
 {
  private:
   long score;
-
-  long total;
-
   char scoreChar[16];
+
+  char totalChar[16];
+
+
 
   int startM;
   int startS;
@@ -58,6 +48,9 @@ class Pitcher
   char timeChar[2];
 
  public:
+
+  long total;
+  
   Pitcher(){
     score = 0;
     timeRm = 60;
@@ -113,6 +106,9 @@ class Pitcher
   }
 
   void pitcherCompleted(){
+
+    total = score;
+    
     String(score).toCharArray(totalChar, 17);
 
     tft.clearScreen();
@@ -139,7 +135,11 @@ class Pomodoro
   int shortBreak = 5;
   int longBreak = 15;
   int deskDistance = 50;
-  //String 
+  int commH = 7;
+//  int commInterval = 24;
+  boolean isSent = false;
+
+  long highest = 0;
 
  public:
  
@@ -149,6 +149,10 @@ class Pomodoro
   
   void pomoListener(){
     myDFPlayer.pause();
+
+
+
+    
     Serial.println("pomoListener");
     int distance = getDistance();
     //Serial.println(getDistance());
@@ -157,13 +161,35 @@ class Pomodoro
     delay(1000);
     tft.clearScreen();
     while(distance > -1){
-      Serial.println(distance);
+      //Serial.print(hour());
+      //Serial.println(minute());
+      if(hour() == commH && minute() > 31 && isSent == false){
+        //Serial.println("Date: " + day() + " " + month() + " " + year());
+        Serial.print("Day: ");
+        Serial.println(day());
+        Serial.print("Month: ");
+        Serial.println(month());
+        Serial.print("Year: ");
+        Serial.println(year());
+        Serial.print("PomoAmount: ");
+        Serial.println(countPomo);
+        countPomo = 0;
+        Serial.print("Highest: ");
+        Serial.println(highest);
+        isSent = true;
+      }
+
+      
+    if(hour() == commH + 1 && isSent == true){
+      isSent = false;
+    }
+      //Serial.println(distance);
       distance = getDistance();
-      if(distance > deskDistance){
-        Serial.println("distance > deskDistance");
+      if(distance > deskDistance || distance == 0){
+        //Serial.println("distance > deskDistance");
         tft.drawString(0, 100, "Come sit down and start a pomodoro!");
       }else{
-        
+        tft.clearScreen();
         tft.drawString(20, 100, "POMODORO Started.");
         delay(1000);
         tft.clearScreen();
@@ -216,7 +242,7 @@ class Pomodoro
    delay(100);
   unsigned int uS = sonar.ping(); // Send ping, get ping time in microseconds.
   int rangeInCentimeters = (uS / US_ROUNDTRIP_CM);
-  Serial.println(rangeInCentimeters);
+  //Serial.println(rangeInCentimeters);
   return rangeInCentimeters;
 }
 
@@ -309,6 +335,10 @@ class Pomodoro
       Pitcher pitcher;
 
       pitcher.pitcherListener();
+
+      if(pitcher.total > highest){
+        highest = pitcher.total;
+      }
       
     }
     pomoListener();
@@ -349,11 +379,7 @@ void setup() {
   pomodoro.pomoListener();
 }
 
-void loop() {
-  //displayTime();
-
-  //pomodoro.pomoListener();
-}
+void loop() {}
 
 //Return a string of current time for displaying on the screen
 void displayTime(){
